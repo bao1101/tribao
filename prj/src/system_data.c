@@ -10,9 +10,9 @@
 // ==================== PROCESS ====================
 typedef struct {
     char name[64];
-    float cpuUsage;      // %
-    float ramUsage;      // MB
-    unsigned long pid;   // Process ID
+    float cpuUsage;      
+    float ramUsage;     
+    unsigned long pid;   
 } Process;
 
 // ==================== CPU ====================
@@ -27,29 +27,29 @@ typedef struct {
 
 // ==================== MEMORY ====================
 typedef struct {
-    unsigned long used;      // MB
-    unsigned long total;     // MB
-    unsigned long swapUsed;  // MB
-    unsigned long swapTotal; // MB
-    unsigned long cache;     // MB
+    unsigned long used;      
+    unsigned long total;     
+    unsigned long swapUsed;  
+    unsigned long swapTotal; 
+    unsigned long cache;     
     Process topProcesses[MAX_PROCESSES];
 } MemoryInfo;
 
 // ==================== DISK ====================
 typedef struct {
-    unsigned long used;     // MB
-    unsigned long total;    // MB
-    float readSpeed;        // MB/s
-    float writeSpeed;       // MB/s
+    unsigned long used;     
+    unsigned long total;    
+    float readSpeed;        
+    float writeSpeed;       
     unsigned long iops;
 } DiskInfo;
 
 // ==================== NETWORK ====================
 typedef struct {
-    char ipAddress[40];      // Hỗ trợ cả IPv6
-    float uploadSpeed;       // MB/s
-    float downloadSpeed;     // MB/s
-    float bandwidth;         // Mbps
+    char ipAddress[40];      
+    float uploadSpeed;      
+    float downloadSpeed;     
+    float bandwidth;         
     unsigned long packetsSent;
     unsigned long packetsReceived;
     int connections;
@@ -57,14 +57,14 @@ typedef struct {
 
 // ==================== SYSTEM ====================
 typedef struct {
-    long uptime;             // seconds
-    char systemTime[32];     // "YYYY-MM-DD HH:MM:SS"
+    long uptime;            
+    char systemTime[32];     
     char kernelVersion[64];
     char services[MAX_SERVICES][64];
     float loadAvg[3];
 } SystemInfo;
 
-// ==================== HỆ THỐNG CHÍNH ====================
+// ==================== MAIN SYSTEM ====================
 typedef struct {
     CPUInfo cpu;
     MemoryInfo memory;
