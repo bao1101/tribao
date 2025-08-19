@@ -1,97 +1,137 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAX_PROCESSES 50
-#define MAX_CORES 8
 #define MAX_SERVICES 100
+#define MAX_CORES 16
 
+// ==================== PROCESS ====================
 typedef struct {
-    char name[50];
-    float cpuUsage;
-    float ramUsage;
+    char name[64];
+    float cpuUsage;      // %
+    float ramUsage;      // MB
+    unsigned long pid;   // Process ID
 } Process;
 
+// ==================== CPU ====================
 typedef struct {
-    float totalCpuUsage;
-    float coreUsage[MAX_CORES];
-    float frequency;
-    float temperature;
-    Process topCpuProcesses[MAX_PROCESSES];
-    Process topRamProcesses[MAX_PROCESSES];
-    unsigned long ramUsed;
-    unsigned long ramTotal;
-    unsigned long swapUsed;
-    unsigned long cacheSize;
-    unsigned long diskUsed;
-    unsigned long diskTotal;
-    float readSpeed;
-    float writeSpeed;
+    float totalUsage;              // %
+    float coreUsage[MAX_CORES];    // %
+    float frequency;               // MHz
+    float temperature;             // °C
+    int coreCount;
+    Process topProcesses[MAX_PROCESSES];
+} CPUInfo;
+
+// ==================== MEMORY ====================
+typedef struct {
+    unsigned long used;      // MB
+    unsigned long total;     // MB
+    unsigned long swapUsed;  // MB
+    unsigned long swapTotal; // MB
+    unsigned long cache;     // MB
+    Process topProcesses[MAX_PROCESSES];
+} MemoryInfo;
+
+// ==================== DISK ====================
+typedef struct {
+    unsigned long used;     // MB
+    unsigned long total;    // MB
+    float readSpeed;        // MB/s
+    float writeSpeed;       // MB/s
     unsigned long iops;
-    float uploadSpeed;
-    float downloadSpeed;
-    float bandwidth;
-    int connections;
-    char ipAddress[16];
+} DiskInfo;
+
+// ==================== NETWORK ====================
+typedef struct {
+    char ipAddress[40];      // Hỗ trợ cả IPv6
+    float uploadSpeed;       // MB/s
+    float downloadSpeed;     // MB/s
+    float bandwidth;         // Mbps
     unsigned long packetsSent;
     unsigned long packetsReceived;
-    long uptime;
-    char systemTime[20];
-    char kernelVersion[20];
-    char services[MAX_SERVICES][50];
+    int connections;
+} NetworkInfo;
+
+// ==================== SYSTEM ====================
+typedef struct {
+    long uptime;             // seconds
+    char systemTime[32];     // "YYYY-MM-DD HH:MM:SS"
+    char kernelVersion[64];
+    char services[MAX_SERVICES][64];
     float loadAvg[3];
-    int coreCount;
+} SystemInfo;
+
+// ==================== HỆ THỐNG CHÍNH ====================
+typedef struct {
+    CPUInfo cpu;
+    MemoryInfo memory;
+    DiskInfo disk;
+    NetworkInfo network;
+    SystemInfo system;
 } SystemData;
 
 void initSystemData(SystemData *data) {
-    data->totalCpuUsage = 23.9;
-    data->coreUsage[0] = 17.9; data->coreUsage[1] = 18.3; data->coreUsage[2] = 0.0; data->coreUsage[3] = 0.0;
-    data->frequency = 3200.5;
-    data->temperature = 45.7;
-    strcpy(data->topCpuProcesses[0].name, "Microsoft Edge"); data->topCpuProcesses[0].cpuUsage = 17.9;
-    strcpy(data->topCpuProcesses[1].name, "Antimalware Service"); data->topCpuProcesses[1].cpuUsage = 0.2;
-    strcpy(data->topCpuProcesses[2].name, "Zalo"); data->topCpuProcesses[2].cpuUsage = 0.1;
-    strcpy(data->topCpuProcesses[3].name, "Foxit Reader"); data->topCpuProcesses[3].cpuUsage = 0.0;
-    strcpy(data->topCpuProcesses[4].name, "HP Insights"); data->topCpuProcesses[4].cpuUsage = 0.0;
-    data->ramUsed = 4096; data->ramTotal = 16384;
-    data->swapUsed = 512;
-    strcpy(data->topRamProcesses[0].name, "Microsoft Edge"); data->topRamProcesses[0].ramUsage = 2.5;
-    strcpy(data->topRamProcesses[1].name, "Windows Explorer"); data->topRamProcesses[1].ramUsage = 0.9;
-    data->cacheSize = 1024;
-    data->diskUsed = 50000; data->diskTotal = 100000;
-    data->readSpeed = 50.0; data->writeSpeed = 30.0;
-    data->iops = 1000;
-    data->uploadSpeed = 0.2; data->downloadSpeed = 0.1;
-    data->bandwidth = 0.1;
-    data->connections = 10;
-    strcpy(data->ipAddress, "192.168.1.1");
-    data->packetsSent = 10000; data->packetsReceived = 15000;
-    data->uptime = 172800;
-    strcpy(data->systemTime, "09:16 PM +07");
-    strcpy(data->kernelVersion, "Windows 10 22H2");
-    strcpy(data->services[0], "Service1"); strcpy(data->services[1], "Service2");
-    data->loadAvg[0] = 1.5; data->loadAvg[1] = 1.2; data->loadAvg[2] = 1.0;
-    data->coreCount = 4;
+    // Initialize CPU
+    data->cpu.totalUsage = 23.9;
+    data->cpu.coreUsage[0] = 17.9; data->cpu.coreUsage[1] = 18.3;
+    data->cpu.coreUsage[2] = 0.0; data->cpu.coreUsage[3] = 0.0;
+    data->cpu.frequency = 3200.5;
+    data->cpu.temperature = 45.7;
+    data->cpu.coreCount = 4;
+    strcpy(data->cpu.topProcesses[0].name, "Microsoft Edge"); data->cpu.topProcesses[0].cpuUsage = 17.9; data->cpu.topProcesses[0].pid = 1234;
+    strcpy(data->cpu.topProcesses[1].name, "Antimalware Service"); data->cpu.topProcesses[1].cpuUsage = 0.2; data->cpu.topProcesses[1].pid = 5678;
+
+    // Initialize Memory
+    data->memory.used = 4096; data->memory.total = 16384;
+    data->memory.swapUsed = 512; data->memory.swapTotal = 2048;
+    data->memory.cache = 1024;
+    strcpy(data->memory.topProcesses[0].name, "Microsoft Edge"); data->memory.topProcesses[0].ramUsage = 2.5; data->memory.topProcesses[0].pid = 1234;
+
+    // Initialize Disk
+    data->disk.used = 50000; data->disk.total = 100000;
+    data->disk.readSpeed = 50.0; data->disk.writeSpeed = 30.0;
+    data->disk.iops = 1000;
+
+    // Initialize Network
+    strcpy(data->network.ipAddress, "192.168.1.1");
+    data->network.uploadSpeed = 0.2; data->network.downloadSpeed = 0.1;
+    data->network.bandwidth = 0.1;
+    data->network.packetsSent = 10000; data->network.packetsReceived = 15000;
+    data->network.connections = 10;
+
+    // Initialize System
+    data->system.uptime = 172800;
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    strftime(data->system.systemTime, sizeof(data->system.systemTime), "%Y-%m-%d %H:%M:%S", tm);
+    strcpy(data->system.kernelVersion, "Windows 10 22H2");
+    strcpy(data->system.services[0], "Service1");
+    data->system.loadAvg[0] = 1.5; data->system.loadAvg[1] = 1.2; data->system.loadAvg[2] = 1.0;
 }
 
 void updateSystemData(SystemData *data) {
-    data->totalCpuUsage += 1.0;
-    data->temperature += 0.5;
-    strcpy(data->systemTime, "09:16 PM +07"); // Update sample time
+    data->cpu.totalUsage += 1.0;
+    data->cpu.temperature += 0.5;
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    strftime(data->system.systemTime, sizeof(data->system.systemTime), "%Y-%m-%d %H:%M:%S", tm);
 }
 
 void checkAlerts(SystemData *data) {
     float cpuThreshold = 80.0;
     float tempThreshold = 60.0;
-    if (data->totalCpuUsage > cpuThreshold) {
-        printf("Warning: CPU exceeds threshold %.1f%%\n", cpuThreshold);
+    if (data->cpu.totalUsage > cpuThreshold) {
+        printf("Warning: CPU usage exceeds threshold %.1f%%\n", cpuThreshold);
     }
-    if (data->temperature > tempThreshold) {
+    if (data->cpu.temperature > tempThreshold) {
         printf("Warning: CPU temperature exceeds threshold %.1f°C\n", tempThreshold);
     }
     FILE *logFile = fopen("logs/system_log.txt", "a");
     if (logFile) {
-        fprintf(logFile, "Time: %s, CPU: %.1f%%, Temp: %.1f°C\n", data->systemTime, data->totalCpuUsage, data->temperature);
+        fprintf(logFile, "Time: %s, CPU: %.1f%%, Temp: %.1f°C\n", data->system.systemTime, data->cpu.totalUsage, data->cpu.temperature);
         fclose(logFile);
     }
 }
